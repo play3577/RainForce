@@ -32,7 +32,7 @@ namespace Example
             //we take 4 states i.e random numbers between 1 and 10
             //we have 2 actions 1 if average of set is >5 and 0 if otherwise
             //we reward agent with 1 for every correct and -1 otherwise
-            var agent= new DQNAgent(opt,4,2);
+            var agent= new DQNAgent(opt,state.Length,2);
 
             while (total < 10000)
             {

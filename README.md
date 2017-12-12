@@ -13,6 +13,7 @@ Reinforcement Learning Agents in C# (Dynamic Programming, Temporal Difference, D
 A typical usage might look something like:
 
 ```C#
+var rnd = new Random();
 var state = new [] {
  rnd.Next(min, max), rnd.Next(min, max), rnd.Next(min, max), rnd.Next(min, max)
 };
