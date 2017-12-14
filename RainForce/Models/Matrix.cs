@@ -6,12 +6,22 @@ namespace RainForce.Models
     public class Matrix
     {
         public int NumberOfRows { get; private set; }
-        public int NumberOfColumns { get; private set; }
+        public int NumberOfColumns { get; }
         public double[] Weights { get; set; }
-        public double[] BackPropWeights { get; set; }
+        public double[] BackPropWeights { get; }
+        public int Id { get; }
 
         public Matrix(int rows, int columns)
         {
+            Id = Util.GetMatrixId();
+            NumberOfRows = rows;
+            NumberOfColumns = columns;
+            Weights = Util.ArrayOfZeros(rows * columns);
+            BackPropWeights = Util.ArrayOfZeros(rows * columns);
+        }
+        public Matrix(int rows, int columns,int id)
+        {
+            Id = id;
             NumberOfRows = rows;
             NumberOfColumns = columns;
             Weights = Util.ArrayOfZeros(rows * columns);
@@ -20,6 +30,7 @@ namespace RainForce.Models
 
         public Matrix()
         {
+            Id = Util.GetMatrixId();
         }
 
         public double Get(int row, int col)

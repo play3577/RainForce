@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using Newtonsoft.Json;
 using RainForce.Models;
 using RainForce.Utilities;
 
@@ -14,26 +16,26 @@ namespace RainForce.Agents
         public int NumberOfActions { get; }
         public double CurrentError { get; set; }
 
-        private Matrix previousState, _nextState;
-        private double _reward, t;
+        private Matrix previousStateCache, nextStateCache;
+        private double rewardCache, learnLoopCount;
         private int nextAction, previousAction;
 
         Graph LastGraph;
 
         public DQNAgent(TrainingOptions options, int states, int actions)
         {
-            Net= new Network();
+            Net= new Network(4,"DQNAgent");
             NumberOfStates = states;
             NumberOfActions = actions;
             Options = options;
-            Net.W1 = new Matrix(Options.HiddenUnits,NumberOfStates);
-            Net.W2 = new Matrix(NumberOfActions, options.HiddenUnits);
-            Net.B1 = new Matrix(options.HiddenUnits,1);
-            Net.B2 = new Matrix(NumberOfActions, 1);
-            Util.FillMatrixWithRandomGaussianNumbers(Net.W1,0,0.01);
-            Util.FillMatrixWithRandomGaussianNumbers(Net.W2, 0, 0.01);
-            Util.FillMatrixWithRandomGaussianNumbers(Net.B1, 0, 0.01);
-            Util.FillMatrixWithRandomGaussianNumbers(Net.B2, 0, 0.01);
+            Net.Matrices[0] = new Matrix(Options.HiddenUnits,NumberOfStates);
+            Net.Matrices[1] = new Matrix(NumberOfActions, options.HiddenUnits);
+            Net.Matrices[2] = new Matrix(options.HiddenUnits,1);
+            Net.Matrices[3] = new Matrix(NumberOfActions, 1);
+            Util.FillMatrixWithRandomGaussianNumbers(Net.Matrices[0],0,0.01);
+            Util.FillMatrixWithRandomGaussianNumbers(Net.Matrices[1], 0, 0.01);
+            Util.FillMatrixWithRandomGaussianNumbers(Net.Matrices[2], 0, 0.01);
+            Util.FillMatrixWithRandomGaussianNumbers(Net.Matrices[3], 0, 0.01);
             Experience= new List<Experience>();
         }
 
@@ -41,9 +43,9 @@ namespace RainForce.Agents
         {
             
             LastGraph = new Graph(backProp);
-            var a1mat = LastGraph.AddMatrix(LastGraph.MultiplyMatrix(net.W1, state), net.B1);
+            var a1mat = LastGraph.AddMatrix(LastGraph.MultiplyMatrix(Net.Matrices[0], state), Net.Matrices[2]);
             var h1mat = LastGraph.GetMatrixFromTangent(a1mat);
-            var action = LastGraph.AddMatrix(LastGraph.MultiplyMatrix(net.W2, h1mat), net.B2);
+            var action = LastGraph.AddMatrix(LastGraph.MultiplyMatrix(Net.Matrices[1], h1mat), Net.Matrices[3]);
             return action;
         }
 
@@ -57,18 +59,18 @@ namespace RainForce.Agents
             // epsilon greedy policy
             if (r.NextDouble() <Options.Epsilon)
             {
-                a = Util.RandomI(0, NumberOfActions);
+                a = Util.Random(0, NumberOfActions);
             }
             else
             {
                 // greedy wrt Q function
                 var amat = Forward(Net, state, false);
-                 a =Util.Maxi(amat.Weights); // returns index of argmax action
+                 a =Util.ActionFromWeights(amat.Weights); // returns index of argmax action
             }
             // shift state memory
-            previousState = _nextState;
+            previousStateCache = nextStateCache;
             previousAction = nextAction;
-            _nextState = state;
+            nextStateCache = state;
             nextAction = a;
             return a;
         }
@@ -84,18 +86,18 @@ namespace RainForce.Agents
             // epsilon greedy policy
             if ( y< Options.Epsilon)
             {
-                a = Util.RandomI(0, NumberOfActions);
+                a = Util.Random(0, NumberOfActions);
             }
             else
             {
                 // greedy wrt Q function
                 var amat = Forward(Net, state, false);
-                a = Util.Maxi(amat.Weights); // returns index of argmax action
+                a = Util.ActionFromWeights(amat.Weights); // returns index of argmax action
             }
             // shift state memory
-            previousState = _nextState;
+            previousStateCache = nextStateCache;
             previousAction = nextAction;
-            _nextState = state;
+            nextStateCache = state;
             nextAction = a;
             return a;
         }
@@ -103,23 +105,23 @@ namespace RainForce.Agents
         public void Learn(double reward)
         {
             // perform an update on Q function
-            if (_reward != 0 && Options.Alpha> 0)
+            if (rewardCache != 0 && Options.Alpha> 0)
             {
 
                 // learn from this tuple to get a sense of how "surprising" it is to the agent
-                var tderror = LearnFromTuple(previousState, previousAction, _reward, _nextState);
+                var tderror = LearnFromTuple(previousStateCache, previousAction, rewardCache, nextStateCache);
                 CurrentError = tderror; // a measure of surprise
 
                 // decide if we should keep this experience in the replay
-                if (t % Options.ExperienceAddEvery == 0)
+                if (learnLoopCount % Options.ExperienceAddEvery == 0)
                 {
                     var exp = new Experience
                     {
                         PreviousAction = previousAction,
                         NextAction = nextAction,
-                        Reward = _reward,
-                        PreviousState = previousState,
-                        NextState = _nextState
+                        Reward = rewardCache,
+                        PreviousState = previousStateCache,
+                        NextState = nextStateCache
                     };
                    Experience.Add(exp);
                     if (Experience.Count > Options.ExperienceSize)
@@ -127,17 +129,17 @@ namespace RainForce.Agents
                         Experience.RemoveAt(0);
                     }
                 }
-                t += 1;
+                learnLoopCount += 1;
 
                 // sample some additional experience from replay memory and learn from it
                 for (var k = 0; k <Options.LearningSteps; k++)
                 {
-                    var ri = Util.RandomI(0, Experience.Count);
+                    var ri = Util.Random(0, Experience.Count);
                     var e = Experience[ri];
                     LearnFromTuple(e.PreviousState,e.PreviousAction, e.Reward, e.NextState);
                 }
             }
-            _reward = reward; // store for next update
+            rewardCache = reward; // store for next update
         }
 
         private double LearnFromTuple(Matrix prevState, int prevAction, double reward, Matrix nextState)
@@ -146,7 +148,7 @@ namespace RainForce.Agents
 
             // compute the target Q value
             var tmat = Forward(Net, nextState, false);
-            var qmax = reward + Options.Gamma * tmat.Weights[Util.Maxi(tmat.Weights)];
+            var qmax = reward + Options.Gamma * tmat.Weights[Util.ActionFromWeights(tmat.Weights)];
 
             // now predict
             var pred = Forward(Net, prevState, true);
@@ -164,6 +166,16 @@ namespace RainForce.Agents
             // update net
             Util.UpdateNetwork(Net, Options.Alpha);
             return tderror;
+        }
+
+        public string AgentToJson()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
+
+        public static DQNAgent AgentFromJson(string agent)
+        {
+           return JsonConvert.DeserializeObject<DQNAgent>(agent);
         }
     }
 }

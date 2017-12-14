@@ -1,12 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
 using RainForce.Models;
 
 namespace RainForce.Utilities
 {
     public static class Util
     {
-        static bool GetFromMemory = false;
-        static double CachedGaussRandom = 0.0;
+        static bool GetFromMemory;
+        static double CachedGaussRandom;
+        private static int MatrixId { get; set; }
+
+        public static int GetMatrixId()
+        {
+            MatrixId++;
+            return MatrixId;
+        }
         public static void Assert(bool condition, string message="")
         {
             if (!condition)
@@ -26,8 +34,8 @@ namespace RainForce.Utilities
                 GetFromMemory = false;
                 return CachedGaussRandom;
             }
-            var u = 2 * Random() - 1;
-            var v = 2 * Random() - 1;
+            var u = 2 * RandomMaxOne() - 1;
+            var v = 2 * RandomMaxOne() - 1;
             var r = u * u + v * v;
             if (r == 0 || r > 1)
             {
@@ -39,30 +47,26 @@ namespace RainForce.Utilities
             return u * c;
         }
 
-        public static double Random(double minimum=0, double maximum=1)
+        public static double RandomMaxOne(double minimum=0, double maximum=1)
         {
             Random random = new Random();
             return random.NextDouble() * (maximum - minimum) + minimum;
         }
 
-        public static double RandomF(double a, double b)
+        public static double Random(double a, double b)
         {
-            return Random()* (b - a) + a;
+            return RandomMaxOne()* (b - a) + a;
         }
 
-        public static double RandomI(double a, double b)
+        public static int Random(int a, int b)
         {
-            return Math.Floor(RandomF(a, b));
-        }
-        public static int RandomI(int a, int b)
-        {
-            var t= Math.Floor(RandomF(a, b));
+            var t= Math.Floor(Random((double) a, b));
             return (int) t;
         }
 
-        public static double RandomN(double mu, double std)
+        public static double Random(double mu, double std,double gauss)
         {
-            return mu + GaussRandom() * std;
+            return mu + gauss * std;
         }
 
         public static double[] ArrayOfZeros(int length=0)
@@ -82,7 +86,7 @@ namespace RainForce.Utilities
             }
         }
 
-        public static double Sig(double x)
+        public static double SigmoidHelper(double x)
         {
             // helper function for computing sigmoid
             return 1.0 / (1 + Math.Exp(-x));
@@ -92,7 +96,7 @@ namespace RainForce.Utilities
         {
             for (int i = 0, n = m.Weights.Length; i < n; i++)
             {
-                m.Weights[i] = RandomN(mu, std);
+                m.Weights[i] = Random(mu, std,GaussRandom());
             }
         }
 
@@ -109,7 +113,7 @@ namespace RainForce.Utilities
         }
         public static Network Net(Network network)
         {
-            if (network.Key != string.Empty && network.Matrix != null)
+            if (network.Key != string.Empty)
             {
                 return network;
             }
@@ -133,28 +137,13 @@ namespace RainForce.Utilities
         }
         public static void UpdateNetwork(Network m, double alpha)
         {
-            if (m.Matrix != null)
+            foreach (var mMatrix in m.Matrices)
             {
-                UpdateMatrix(m.Matrix,alpha);
+                if (mMatrix != null)
+                {
+                    UpdateMatrix(mMatrix,alpha);
+                }
             }
-
-            if (m.W1 != null)
-            {
-                UpdateMatrix(m.W1,alpha);
-            }
-            if (m.W2 != null)
-            {
-                UpdateMatrix(m.W2,alpha);
-            }
-            if (m.B1 != null)
-            {
-                UpdateMatrix(m.B1,alpha);
-            }
-            if (m.B2 != null)
-            {
-                UpdateMatrix(m.B2,alpha);
-            }
-
 
         }
 
@@ -177,7 +166,7 @@ namespace RainForce.Utilities
             return g;
         }
 
-        public static int Maxi(double[] w)
+        public static int ActionFromWeights(double[] w)
         {
             // argmax of array w
             var maxv = w[0];
@@ -194,11 +183,11 @@ namespace RainForce.Utilities
             return maxix;
         }
 
-        public static int SampleI(double[] w)
+        public static int SampleAction(double[] w)
         {
             // sample argmax from w, assuming w are
             // probabilities that sum to one
-            var r = RandomF(0, 1);
+            var r = Random((double) 0, 1);
             var x = 0.0;
             var i = 0;
             while (true)
@@ -209,6 +198,52 @@ namespace RainForce.Utilities
                     return i;
                 }
                 i++;
+            }
+        }
+
+        public static int SampleWeightedAction(double[]p)
+        {
+            var r = RandomMaxOne();
+            var c = 0.0;
+            for (int i = 0, n = p.Length; i < n; i++)
+            {
+                c += p[i];
+                if (c >= r)
+                {
+                    return i;
+                }
+            }
+            Assert(false, "WTF");
+            return 0;//quite sute will never get here
+        }
+        public static int SampleWeightedAction(List<double> p)
+        {
+            var r = RandomMaxOne();
+            var c = 0.0;
+            for (int i = 0, n = p.Count; i < n; i++)
+            {
+                c += p[i];
+                if (c >= r)
+                {
+                    return i;
+                }
+            }
+            Assert(false, "WTF");
+            return 0;//quite sute will never get here
+        }
+
+        public static void FillArrayWithConstant(double[] arr, double con)
+        {
+            for (int i = 0, n = arr.Length; i < n; i++)
+            {
+                arr[i] = con;
+            }
+        }
+        public static void FillArrayWithConstant(int[] arr, int con)
+        {
+            for (int i = 0, n = arr.Length; i < n; i++)
+            {
+                arr[i] = con;
             }
         }
     }

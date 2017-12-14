@@ -3,7 +3,7 @@ Reinforcement Learning Agents in C# (Dynamic Programming, Temporal Difference, D
 
 **RainForce** is the proper .Net port of [reinforce.js](https://github.com/mbithy/reinforcejs) In particular, the library currently includes:
 
-- **Dynamic Programming** methods <<<_in progress_>>>>
+- **Dynamic Programming** methods ***FULLY PORTED***
 - (Tabular) **Temporal Difference Learning** (SARSA/Q-Learning) <<<_in progress_>>>>
 - **Deep Q-Learning** for Q-Learning with function approximation with Neural Networks  ***FULLY PORTED***
 - **Stochastic/Deterministic Policy Gradients** <<<_I woun't even touch this mess_>>>>

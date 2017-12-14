@@ -44,7 +44,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Categories\UpdateMode.cs" />
+    <Compile Include="Agents\DPAgent.cs" />
+    <Compile Include="Modes\UpdateMode.cs" />
     <Compile Include="Agents\DQNAgent.cs" />
     <Compile Include="Models\Experience.cs" />
     <Compile Include="Utilities\Graph.cs" />

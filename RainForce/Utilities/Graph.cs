@@ -46,22 +46,22 @@ namespace RainForce.Utilities
             }
         }
 
-        //public Matrix RowPluck(Matrix m, int ix)
-        //{
-        //    Util.Assert(ix >= 0 && ix < m.NumberOfRows);
-        //    var d = m.NumberOfColumns;
-        //    var outt = new Matrix(d, 1);
-        //    for (int i = 0, n = d; i < n; i++)
-        //    {
-        //        outt.Weights[i] = m.Weights[d * ix + i];
-        //    }
+        public Matrix RowPluck(Matrix m, int ix)
+        {
+            Util.Assert(ix >= 0 && ix < m.NumberOfRows);
+            var d = m.NumberOfColumns;
+            var outt = new Matrix(d, 1);
+            for (int i = 0, n = d; i < n; i++)
+            {
+                outt.Weights[i] = m.Weights[d * ix + i];
+            }
 
-        //    if (NeedsBackPropagation)
-        //    {
-        //        Backward(m,outt,d,ix);
-        //    }
-        //    return outt;
-        //}
+            if (NeedsBackPropagation)
+            {
+                Backward(m, outt, d, ix);
+            }
+            return outt;
+        }
 
         public Matrix GetMatrixFromTangent(Matrix m)
         {
@@ -79,37 +79,37 @@ namespace RainForce.Utilities
             return outt;
         }
 
-        //public Matrix GetMatrixFromSigmoid(Matrix m)
-        //{
-        //    // sigmoid nonlinearity
-        //    var outt = new Matrix(m.NumberOfRows, m.NumberOfColumns);
-        //    var n = m.Weights.Length;
-        //    for (var i = 0; i < n; i++)
-        //    {
-        //        outt.Weights[i] = Util.Sig(m.Weights[i]);
-        //    }
+        public Matrix GetMatrixFromSigmoid(Matrix m)
+        {
+            // sigmoid nonlinearity
+            var outt = new Matrix(m.NumberOfRows, m.NumberOfColumns);
+            var n = m.Weights.Length;
+            for (var i = 0; i < n; i++)
+            {
+                outt.Weights[i] = Util.SigmoidHelper(m.Weights[i]);
+            }
 
-        //    if (NeedsBackPropagation)
-        //    {
-        //        Backward(m, outt, n);
-        //    }
-        //    return outt;
-        //}
+            if (NeedsBackPropagation)
+            {
+                Backward(m, outt, n);
+            }
+            return outt;
+        }
 
-        //public Matrix Relu(Matrix m)
-        //{
-        //    var outt = new Matrix(m.NumberOfRows, m.NumberOfColumns);
-        //    var n = m.Weights.Length;
-        //    for (var i = 0; i < n; i++)
-        //    {
-        //        outt.Weights[i] = Math.Max(0, m.Weights[i]);
-        //    }
-        //    if (NeedsBackPropagation)
-        //    {
-        //        Backward(m, outt, n);
-        //    }
-        //    return outt;
-        //}
+        public Matrix Relu(Matrix m)
+        {
+            var outt = new Matrix(m.NumberOfRows, m.NumberOfColumns);
+            var n = m.Weights.Length;
+            for (var i = 0; i < n; i++)
+            {
+                outt.Weights[i] = Math.Max(0, m.Weights[i]);
+            }
+            if (NeedsBackPropagation)
+            {
+                Backward(m, outt, n);
+            }
+            return outt;
+        }
 
         public Matrix MultiplyMatrix(Matrix m1, Matrix m2)
         {
