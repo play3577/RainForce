@@ -161,7 +161,7 @@ namespace RainForce.Agents
                 if (tderror < -clamp) tderror = -clamp;
             }
             pred.BackPropWeights[prevAction] = tderror;
-            //LastGraph.backward(); // compute gradients on net params //not needed since we already back propagated
+            LastGraph.Backward();
 
             // update net
             Util.UpdateNetwork(Net, Options.Alpha);

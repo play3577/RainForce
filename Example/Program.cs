@@ -18,13 +18,13 @@ namespace Example
             var rnd = new Random();
             int max = 10;
             int min = 1;
-            int nextPrint=0;
+            int nextPrint=0, act1=0,act0=0;
             double total=0,correct=0;
             var state = new[] {rnd.Next(min,max), rnd.Next(min, max), rnd.Next(min, max), rnd.Next(min, max) };
             var opt = new TrainingOptions
             {
                 Alpha = 0.001,
-                Epsilon = 0.5,
+                Epsilon = 0,
                 ErrorClamp = 0.002,
                 ExperienceAddEvery = 10,
                 ExperienceSize = 1000,
@@ -38,13 +38,21 @@ namespace Example
             var agent= new DQNAgent(opt,state.Length,2);
 
             //how to properly use the DPAgent
-            var agent2= new MyDPAgent();
-            agent2.Reset(state.Length,2);
+            //var agent2= new MyDPAgent();
+            //agent2.Reset(state.Length,2);
 
             while (total < 50000)
             {
                 state = new[] {rnd.Next(min, max), rnd.Next(min, max), rnd.Next(min, max), rnd.Next(min, max)};
                 var action = agent.Act(state);
+                if (action == 1)
+                {
+                    act1++;
+                }
+                else
+                {
+                    act0++;
+                }
                 if (state.Average() > 5 && action == 1)
                 {
                     agent.Learn(1);
@@ -64,6 +72,7 @@ namespace Example
                 if (total >= nextPrint)
                 {
                     Console.WriteLine("Score: " + (correct / total).ToString("P")+"Epoch: "+nextPrint);
+                    Console.WriteLine("Action 1: "+act1+" Action 0: "+act0);
                     nextPrint += 1000;
                 }
             }
