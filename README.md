@@ -44,5 +44,5 @@ MIT.
 
 # Notes
 
-I'll try where posible to C#-pify this JS lib but the things I have seen this far..... :dizzy_face: :sweat:
+This might be the component you are looking for
 
